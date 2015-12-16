@@ -6,13 +6,14 @@ import (
 	"net/http"
 	"io/ioutil"
 	"golang.org/x/net/html/charset"
-//	"go-bot-price/pkg"
+	"go-bot-price/pkg"
 //	"strings"
 	
 )
 
 type News struct {
 	url string  //урл новости
+	title string // заголовок новости
 	content string // содержимое новости
 }
 
@@ -47,7 +48,16 @@ func (this *News) GetNews(url string) {
 	body := gethtmlpage(url)
 	shtml := string(body)
 	
-	fmt.Println(shtml)
+//	fmt.Println(shtml)
+    // <a rel="nofollow" href="/likes/e1678230/" class="share" data-url="http://echo.msk.ru/news/1678230-echo.html" data-title="Новое уголовное дело о ремонте кораблей Северного флота поступило в суд">
+   //      <span class="wsico">&#x37;</span>
+  //     </a>
+//    snews, _ := pick.PickAttr(&pick.Option{&shtml, "a", &pick.Attr{"rel", "nofollow"}}, "data-title")
+	snews, _ := pick.PickText(&pick.Option{&shtml, "li", nil})
+	for i:=0;i<len(snews);i++{
+		fmt.Println(snews[i])
+	}
+
 
 //	sname, _ := pick.PickText(&pick.Option{ // текст цены книги
 //		&shtml,
