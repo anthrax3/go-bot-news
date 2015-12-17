@@ -126,12 +126,14 @@ func (this *News) GetNews() {
 }
 
 func Htmlpage(sn []News) string {
-	zagol := "НОВОСТИ"
+	zagol := "ГРАББЕР НОВОСТЕЙ"
 	begstr := "<html>\n <head>\n <meta charset='utf-8'>\n <title>" + zagol + "</title>\n </head>\n <body>\n"
-	bodystr := ""
+	//	<h3 id=”Razdel2”> Раздел2 </h3>
+	bodystr := "<h1 align=\"center\"><a name=\"MainPage\"> ГРАББЕР НОВОСТЕЙ </a></h1><br>" + "<TABLE align=\"center\" border=\"1\">"
 	for i := 0; i < len(sn); i++ {
-		bodystr += genhtml.Link(sn[i].title, sn[i].url) + "<p>" + sn[i].content + "</p><br><br>"
+		bodystr += "<TR> <TD width=\"350\"> <b>" + genhtml.Link(sn[i].title, sn[i].url) + "</b></TD>" + "<TD width=\"550\">" + sn[i].content + "" + "<a href=\"#MainPage\"> В начало </a>" + "</TD> </TR>"
 	}
+	bodystr += "</TABLE>"
 	endstr := "</body>\n" + "</html>"
 	return begstr + bodystr + endstr
 }
@@ -146,11 +148,8 @@ func main() {
 		n = append(n, News{url: ss[i]})
 	}
 
-	//	fmt.Println(n)
-
 	for i := 0; i < len(n); i++ {
 		n[i].GetNews()
-		fmt.Println(n[i])
 	}
 
 	str := Htmlpage(n)
