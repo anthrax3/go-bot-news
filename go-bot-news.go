@@ -72,6 +72,7 @@ func delpovtor(s []string) []string {
 	return st
 }
 
+// вывод на пкчать массива строк
 func printarray(s []string) {
 	for i := 0; i < len(s); i++ {
 		fmt.Println(s[i])
@@ -79,8 +80,22 @@ func printarray(s []string) {
 	return
 }
 
-//получение новостей
-func GetNewsUrl(url string) []string {
+//--------------- парсинг Эха Москвы
+func GetNewsEchoMsk() []News {
+	url := "http://echo.msk.ru/"	
+	n := make([]News, 0)
+	ss := GetNewsUrlEchoMsk(url)
+	for i := 0; i < len(ss); i++ {
+		n = append(n, News{url: ss[i]})
+	}
+	for i := 0; i < len(n); i++ {
+		n[i].ParserNewsEchoMsk()
+	}
+	return n
+}
+
+//получение урлы новостей с главной страницы
+func GetNewsUrlEchoMsk(url string) []string {
 	//	var ss []string
 	if url == "" {
 		return make([]string, 0)
@@ -102,7 +117,8 @@ func GetNewsUrl(url string) []string {
 	return delpovtor(snews)
 }
 
-func (this *News) GetNews() {
+//парсер новостей с сайта Эха Москвы
+func (this *News) ParserNewsEchoMsk() {
 
 	if this.url == "" {
 		return
@@ -125,34 +141,38 @@ func (this *News) GetNews() {
 	return
 }
 
+//--------------- END парсинг Эха Москвы
+
+
+// генерация html главной страницы
 func Htmlpage(sn []News) string {
 	zagol := "ГРАББЕР НОВОСТЕЙ"
 	begstr := "<html>\n <head>\n <meta charset='utf-8'>\n <title>" + zagol + "</title>\n </head>\n <body>\n"
 	//	<h3 id=”Razdel2”> Раздел2 </h3>
-	bodystr := "<h1 align=\"center\"><a name=\"MainPage\"> ГРАББЕР НОВОСТЕЙ </a></h1><br>" + "<TABLE align=\"center\" border=\"1\">"
-	for i := 0; i < len(sn); i++ {
-		bodystr += "<TR> <TD width=\"350\"> <b>" + genhtml.Link(sn[i].title, sn[i].url) + "</b></TD>" + "<TD width=\"550\">" + sn[i].content + "" + "<a href=\"#MainPage\"> В начало </a>" + "</TD> </TR>"
-	}
-	bodystr += "</TABLE>"
+	bodystr := "<h1 align=\"center\"><a name=\"MainPage\"> ГРАББЕР НОВОСТЕЙ </a></h1><br>"
+	bodystr += HtmlNews(sn,"EchoMSK")
 	endstr := "</body>\n" + "</html>"
 	return begstr + bodystr + endstr
 }
 
+// шаблон оформления новости из одного ресурса
+func HtmlNews(sn []News,titlenews string) string{
+	bodystr := "<h3 align=\"center\"><a name=\""+titlenews+"\"> "+titlenews+" </a></h3><br>" + "<TABLE align=\"center\" border=\"1\">"
+	for i := 0; i < len(sn); i++ {
+		bodystr += "<TR> <TD width=\"350\"> <b>" + genhtml.Link(sn[i].title, sn[i].url) + "</b></TD>" + "<TD width=\"550\">" + sn[i].content + "" + "<a href=\"#MainPage\"> В начало </a>" + "<a href=\"#"+titlenews+"\"> К Новости </a>"+ "</TD> </TR>"
+	}
+	bodystr += "</TABLE>"	
+	return bodystr
+}
+
+
 func main() {
 	fmt.Println("Starting программы")
-	url := "http://echo.msk.ru/"
-	n := make([]News, 0)
-
-	ss := GetNewsUrl(url)
-	for i := 0; i < len(ss); i++ {
-		n = append(n, News{url: ss[i]})
-	}
-
-	for i := 0; i < len(n); i++ {
-		n[i].GetNews()
-	}
-
+	
+    n:=GetNewsEchoMsk()
+	
 	str := Htmlpage(n)
+	
 	genhtml.Savestrtofile("news.html", str)
 
 	fmt.Println("Ending программы")
