@@ -159,7 +159,7 @@ func Htmlpage(sn []News) string {
 func HtmlNews(sn []News,titlenews string) string{
 	bodystr := "<h3 align=\"center\"><a name=\""+titlenews+"\"> "+titlenews+" </a></h3><br>" + "<TABLE align=\"center\" border=\"1\">"
 	for i := 0; i < len(sn); i++ {
-		bodystr += "<TR> <TD width=\"350\"> <b>" + genhtml.Link(sn[i].title, sn[i].url) + "</b></TD>" + "<TD width=\"550\">" + sn[i].content + "" + "<a href=\"#MainPage\"> В начало </a>" + "<a href=\"#"+titlenews+"\"> К Новости </a>"+ "</TD> </TR>"
+		bodystr += "<TR> <TD width=\"350\"> <b>" + genhtml.Link(sn[i].title, sn[i].url) + "</b></TD>" + "<TD width=\"550\"><br>" + sn[i].content + "" + "<br> <a href=\"#MainPage\"> В начало </a>" + " <a href=\"#"+titlenews+"\"> К "+titlenews+" </a> "+ "</TD> </TR>"
 	}
 	bodystr += "</TABLE>"	
 	return bodystr
