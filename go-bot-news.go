@@ -3,18 +3,32 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"io/ioutil"
+	"go-bot-news/pkg"
+	"go-bot-news/pkg/html"
 	"golang.org/x/net/html/charset"
-	"go-bot-price/pkg"
-//	"strings"
-	
+	"io"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"strings"
 )
 
 type News struct {
-	url string  //урл новости
-	title string // заголовок новости
+	url     string //урл новости
+	title   string // заголовок новости
 	content string // содержимое новости
+}
+
+//инициализация лог файла
+func InitLogFile(namef string) *log.Logger {
+	file, err := os.OpenFile(namef, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalln("Failed to open log file", os.Stderr, ":", err)
+	}
+	multi := io.MultiWriter(file, os.Stdout)
+	LFile := log.New(multi, "Info: ", log.Ldate|log.Ltime|log.Lshortfile)
+	return LFile
 }
 
 //получение страницы из урла url
@@ -39,69 +53,108 @@ func gethtmlpage(url string) []byte {
 	return body
 }
 
-//получение данных товара из магазина Эльдорадо по урлу url
-func (this *News) GetNews(url string) {
-//	var ss []string
+//удаление повторных элементов в массиве
+func delpovtor(s []string) []string {
+	fl := false
+	st := make([]string, 0)
+	st = append(st, s[0])
+	for i := 0; i < len(s); i++ {
+		fl = true
+		for j := 0; j < len(st); j++ {
+			if s[i] == st[j] {
+				fl = false
+			}
+		}
+		if fl {
+			st = append(st, s[i])
+		}
+	}
+	return st
+}
+
+func printarray(s []string) {
+	for i := 0; i < len(s); i++ {
+		fmt.Println(s[i])
+	}
+	return
+}
+
+//получение новостей
+func GetNewsUrl(url string) []string {
+	//	var ss []string
 	if url == "" {
-		return
+		return make([]string, 0)
 	}
 	body := gethtmlpage(url)
 	shtml := string(body)
-	
-//	fmt.Println(shtml)
-    // <a rel="nofollow" href="/likes/e1678230/" class="share" data-url="http://echo.msk.ru/news/1678230-echo.html" data-title="Новое уголовное дело о ремонте кораблей Северного флота поступило в суд">
-   //      <span class="wsico">&#x37;</span>
-  //     </a>
-//    snews, _ := pick.PickAttr(&pick.Option{&shtml, "a", &pick.Attr{"rel", "nofollow"}}, "data-title")
-	snews, _ := pick.PickText(&pick.Option{&shtml, "li", nil})
-	for i:=0;i<len(snews);i++{
-		fmt.Println(snews[i])
+
+	// <a rel="nofollow" href="/likes/e1678230/" class="share" data-url="http://echo.msk.ru/news/1678230-echo.html" data-title="Новое уголовное дело о ремонте кораблей Северного флота поступило в суд">
+	snewsmusor, _ := pick.PickAttr(&pick.Option{&shtml, "a", nil}, "data-url")
+	snews := make([]string, 0)
+	for i := 0; i < len(snewsmusor); i++ {
+		if strings.Contains(snewsmusor[i], "-echo.htm") && (strings.Contains(snewsmusor[i], "/news/")) {
+			snews = append(snews, snewsmusor[i])
+		}
 	}
 
+	//	printarray(delpovtor(snews))
 
-//	sname, _ := pick.PickText(&pick.Option{ // текст цены книги
-//		&shtml,
-//		"div",
-//		&pick.Attr{
-//			"class",
-//			"q-fixed-name no-mobile",
-//		},
-//	})
+	return delpovtor(snews)
+}
 
-//	for i := 0; i < len(sname); i++ {
-//		if strings.TrimSpace(sname[i]) != "" { // удаление пробелов
-//			ss = append(ss, sname[i])
-//		}
-//	}
+func (this *News) GetNews() {
 
-//	this.name = ss[0]
+	if this.url == "" {
+		return
+	}
+	body := gethtmlpage(this.url)
+	shtml := string(body)
 
-//	sprice, _ := pick.PickText(&pick.Option{&shtml, "span", &pick.Attr{"itemprop", "price"}})
+	//	<meta property="og:title" content="Новости / 17 декабря, 16:31 | Путин утверждает, что  никогда  не  обсуждал  с  региональными  лидерами расследование конкретных  уголовных  дел" />
 
-//	ss = make([]string, 0)
-//	for i := 0; i < len(sprice); i++ {
-//		if strings.TrimSpace(sprice[i]) != "" { // удаление пробелов
-//			ss = append(ss, sprice[i])
-//		}
-//	}
+	stitle, _ := pick.PickAttr(&pick.Option{&shtml, "meta", &pick.Attr{"property", "og:title"}}, "content")
+	if len(stitle) > 0 {
+		this.title = stitle[0]
+	}
 
-//	if len(ss) > 0 {
-//		this.price, _ = strconv.Atoi(ss[0])
-//	}
+	//	<meta property="og:description" content="
+	//В   том числе дела об убийстве    Бориса  Немцова. «Следствие должно установить, как бы долго оно ни продолжалось. Это преступление должно быть расследовано и участники должны быть наказаны, кто бы это ни был, — сказал глава государства." />
+	scont, _ := pick.PickAttr(&pick.Option{&shtml, "meta", &pick.Attr{"property", "og:description"}}, "content")
+	this.content = scont[0]
 
 	return
 }
 
-
+func Htmlpage(sn []News) string {
+	zagol := "НОВОСТИ"
+	begstr := "<html>\n <head>\n <meta charset='utf-8'>\n <title>" + zagol + "</title>\n </head>\n <body>\n"
+	bodystr := ""
+	for i := 0; i < len(sn); i++ {
+		bodystr += genhtml.Link(sn[i].title, sn[i].url) + "<p>" + sn[i].content + "</p><br><br>"
+	}
+	endstr := "</body>\n" + "</html>"
+	return begstr + bodystr + endstr
+}
 
 func main() {
 	fmt.Println("Starting программы")
-	url:="http://echo.msk.ru/"
-	var n News
-	
-//	fmt.Println(n.GetNews(url))
-	n.GetNews(url)
-	fmt.Println(n)
-	
+	url := "http://echo.msk.ru/"
+	n := make([]News, 0)
+
+	ss := GetNewsUrl(url)
+	for i := 0; i < len(ss); i++ {
+		n = append(n, News{url: ss[i]})
+	}
+
+	//	fmt.Println(n)
+
+	for i := 0; i < len(n); i++ {
+		n[i].GetNews()
+		fmt.Println(n[i])
+	}
+
+	str := Htmlpage(n)
+	genhtml.Savestrtofile("news.html", str)
+
 	fmt.Println("Ending программы")
 }
