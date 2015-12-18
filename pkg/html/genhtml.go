@@ -52,43 +52,4 @@ func Htmlpage(surl []string) string {
 	return begstr + bodystr + endstr
 }
 
-//-- генерация таблицы в html: первый параметр это заголовок таблицы, второй параметр [[],[],...] - строки таблицы, keys - массив указывающий в каком порядке выводить в таблицу
-//func genhtmltable0(datas map[string]DataTelMans, zagol string, keys []string) string {
-//	res := ""
-//	//res = map gentablestroka str
-
-//	titletab := []string{"ФИО РГ",
-//		"номер телефона",
-//		"ФИО менеджера",
-//		"продол-ть",
-//		"кол-во звонков",
-//		"кол-во уник. тел.",
-//		"кол-во результ. звонков",
-//		"продол-ть уник.",
-//		"ср. время звонка"}
-//	tabletitle := gentablestroka(titletab)
-
-//	tabledata := ""
-//	//for key, _ := range datas {
-//	for i := 0; i < len(keys); i++ {
-//		key := keys[i]
-//		str := []string{
-//			datas[key].fio_rg,
-//			key,
-//			datas[key].fio_man,
-//			sec_to_s(datas[key].totalsec),
-//			strconv.Itoa(datas[key].totalzv),
-//			strconv.Itoa(datas[key].kolunik),
-//			strconv.Itoa(datas[key].kolresult),
-//			sec_to_s(datas[key].secresult),
-//			sec_to_s(devidezero(datas[key].totalsec, datas[key].totalzv))}
-
-//		tabledata += gentablestroka(str)
-//	}
-
-//	zagolovok := "<CAPTION>" + zagol + "</CAPTION>\n"
-//	tablehtml := zagolovok + tabletitle + tabledata
-//	return "<TABLE>" + "\n" + "<TABLE BORDER>\n" + tablehtml + res + "</TABLE>"
-//}
-
 //--------------------

@@ -55,6 +55,9 @@ func gethtmlpage(url string) []byte {
 
 //удаление повторных элементов в массиве
 func delpovtor(s []string) []string {
+	if len(s)==0 {
+		return make([]string,0)
+	}
 	fl := false
 	st := make([]string, 0)
 	st = append(st, s[0])
@@ -143,6 +146,86 @@ func (this *News) ParserNewsEchoMsk() {
 
 //--------------- END парсинг Эха Москвы
 
+//--------------- парсинг РБК
+
+func GetNewsRbc() []News {
+	url := "http://rt.rbc.ru/"	
+	n := make([]News, 0)
+	ss := 	GetNewsUrlRbc(url)
+	
+	for i := 0; i < len(ss); i++ {
+		n = append(n, News{url: ss[i]})
+	}
+	for i := 0; i < len(n); i++ {
+		n[i].ParserNewsRbc()
+	}
+	return n
+}
+
+//получение урлы новостей с главной страницы
+func GetNewsUrlRbc(url string) []string {
+	//	var ss []string
+	if url == "" {
+		return make([]string, 0)
+	}
+	body := gethtmlpage(url)
+	shtml := string(body)
+
+	// <a href="http://www.rbc.ru/politics/18/12/2015/5673fcd39a794764ce0cd14e" class="news-main-feed__item__link chrome" data-ati-item="item_1" data-ati-title="%D0%95%D0%B2%D1%80%D0%BE%D0%BA%D0%BE%D0%BC%D0%B8%D1%81%D1%81%D0%B8%D1%8F+%D1%80%D0%B5%D0%BA%D0%BE%D0%BC%D0%B5%D0%BD%D0%B4%D0%BE%D0%B2%D0%B0%D0%BB%D0%B0+%D0%BE%D1%82%D0%BC%D0%B5%D0%BD%D0%B8%D1%82%D1%8C+%D0%B2%D0%B8%D0%B7%D0%BE%D0%B2%D1%8B%D0%B9+%D1%80%D0%B5%D0%B6%D0%B8%D0%BC+%D0%B4%D0%BB%D1%8F%D0%A3%D0%BA%D1%80%D0%B0%D0%B8%D0%BD%D1%8B" data-ati-id="5673fcd39a794764ce0cd14e" data-ati-url="http://www.rbc.ru/politics/18/12/2015/5673fcd39a794764ce0cd14e">
+	snewsmusor, _ := pick.PickAttr(&pick.Option{&shtml, "a", &pick.Attr{"class", "news-main-feed__item__link chrome"}}, "href")
+	snews := snewsmusor
+//	make([]string, 0)
+	
+//	fmt.Println(snewsmusor)
+	
+//	for i := 0; i < len(snewsmusor); i++ {
+//		if strings.Contains(snewsmusor[i], "-echo.htm") && (strings.Contains(snewsmusor[i], "/news/")) {
+//			snews = append(snews, snewsmusor[i])
+//		}
+//	}
+
+	//	printarray(delpovtor(snews))
+
+	return delpovtor(snews)
+}
+
+//парсер новостей с сайта РБК
+func (this *News) ParserNewsRbc() {
+
+	if this.url == "" {
+		return
+	}
+	body := gethtmlpage(this.url)
+	shtml := string(body)
+
+	//    <div class="article__overview__text">Еврокомиссия констатировала выполнение Украиной всех требований плана действий визовой либерализации. Еврочиновники в своем новом отчете рекомендуют Евросовету и Европарламенту начать процесс отмены виз для украинцев</div>
+
+	stitle, _ := pick.PickText(&pick.Option{ 
+		&shtml,
+		"div",
+		&pick.Attr{
+			"class",
+			"article__overview__text",
+		},
+	})
+	
+//	fmt.Println(stitle)
+	
+	if len(stitle) > 0 {
+		this.title = stitle[0]
+	}
+
+	//	<meta property="og:description" content="
+	//В   том числе дела об убийстве    Бориса  Немцова. «Следствие должно установить, как бы долго оно ни продолжалось. Это преступление должно быть расследовано и участники должны быть наказаны, кто бы это ни был, — сказал глава государства." />
+	scont, _ := pick.PickAttr(&pick.Option{&shtml, "meta", &pick.Attr{"property", "og:description"}}, "content")
+	this.content = scont[0]
+
+	return
+}
+
+//--------------- END парсинг РБК
+
+
 
 // генерация html главной страницы
 func Htmlpage(sn []News) string {
@@ -167,13 +250,15 @@ func HtmlNews(sn []News,titlenews string) string{
 
 
 func main() {
-	fmt.Println("Starting программы")
+//	fmt.Println("Starting программы")
 	
-    n:=GetNewsEchoMsk()
-	
-	str := Htmlpage(n)
-	
+    n:=GetNewsEchoMsk()	
+	str := Htmlpage(n)	
 	genhtml.Savestrtofile("news.html", str)
+	
+	rbc:=GetNewsRbc()
+	s:=Htmlpage(rbc)
+	genhtml.Savestrtofile("rbc.html", s)
 
-	fmt.Println("Ending программы")
+//	fmt.Println("Ending программы")
 }
