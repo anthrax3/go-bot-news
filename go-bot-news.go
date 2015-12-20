@@ -5,19 +5,25 @@ import (
 	"fmt"
 	"go-bot-news/pkg"
 	"go-bot-news/pkg/html"
-	"golang.org/x/net/html/charset"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	"golang.org/x/net/html/charset"
 )
 
 type News struct {
 	url     string //урл новости
 	title   string // заголовок новости
 	content string // содержимое новости
+}
+
+type ListNews struct {
+	name string //название портала
+	url  string //урл портала
 }
 
 //инициализация лог файла
@@ -55,8 +61,8 @@ func gethtmlpage(url string) []byte {
 
 //удаление повторных элементов в массиве
 func delpovtor(s []string) []string {
-	if len(s)==0 {
-		return make([]string,0)
+	if len(s) == 0 {
+		return make([]string, 0)
 	}
 	fl := false
 	st := make([]string, 0)
@@ -84,18 +90,6 @@ func printarray(s []string) {
 }
 
 //--------------- парсинг Эха Москвы
-func GetNewsEchoMsk() []News {
-	url := "http://echo.msk.ru/"	
-	n := make([]News, 0)
-	ss := GetNewsUrlEchoMsk(url)
-	for i := 0; i < len(ss); i++ {
-		n = append(n, News{url: ss[i]})
-	}
-	for i := 0; i < len(n); i++ {
-		n[i].ParserNewsEchoMsk()
-	}
-	return n
-}
 
 //получение урлы новостей с главной страницы
 func GetNewsUrlEchoMsk(url string) []string {
@@ -148,20 +142,6 @@ func (this *News) ParserNewsEchoMsk() {
 
 //--------------- парсинг РБК
 
-func GetNewsRbc() []News {
-	url := "http://rt.rbc.ru/"	
-	n := make([]News, 0)
-	ss := 	GetNewsUrlRbc(url)
-	
-	for i := 0; i < len(ss); i++ {
-		n = append(n, News{url: ss[i]})
-	}
-	for i := 0; i < len(n); i++ {
-		n[i].ParserNewsRbc()
-	}
-	return n
-}
-
 //получение урлы новостей с главной страницы
 func GetNewsUrlRbc(url string) []string {
 	//	var ss []string
@@ -174,17 +154,6 @@ func GetNewsUrlRbc(url string) []string {
 	// <a href="http://www.rbc.ru/politics/18/12/2015/5673fcd39a794764ce0cd14e" class="news-main-feed__item__link chrome" data-ati-item="item_1" data-ati-title="%D0%95%D0%B2%D1%80%D0%BE%D0%BA%D0%BE%D0%BC%D0%B8%D1%81%D1%81%D0%B8%D1%8F+%D1%80%D0%B5%D0%BA%D0%BE%D0%BC%D0%B5%D0%BD%D0%B4%D0%BE%D0%B2%D0%B0%D0%BB%D0%B0+%D0%BE%D1%82%D0%BC%D0%B5%D0%BD%D0%B8%D1%82%D1%8C+%D0%B2%D0%B8%D0%B7%D0%BE%D0%B2%D1%8B%D0%B9+%D1%80%D0%B5%D0%B6%D0%B8%D0%BC+%D0%B4%D0%BB%D1%8F%D0%A3%D0%BA%D1%80%D0%B0%D0%B8%D0%BD%D1%8B" data-ati-id="5673fcd39a794764ce0cd14e" data-ati-url="http://www.rbc.ru/politics/18/12/2015/5673fcd39a794764ce0cd14e">
 	snewsmusor, _ := pick.PickAttr(&pick.Option{&shtml, "a", &pick.Attr{"class", "news-main-feed__item__link chrome"}}, "href")
 	snews := snewsmusor
-//	make([]string, 0)
-	
-//	fmt.Println(snewsmusor)
-	
-//	for i := 0; i < len(snewsmusor); i++ {
-//		if strings.Contains(snewsmusor[i], "-echo.htm") && (strings.Contains(snewsmusor[i], "/news/")) {
-//			snews = append(snews, snewsmusor[i])
-//		}
-//	}
-
-	//	printarray(delpovtor(snews))
 
 	return delpovtor(snews)
 }
@@ -200,7 +169,7 @@ func (this *News) ParserNewsRbc() {
 
 	//    <div class="article__overview__text">Еврокомиссия констатировала выполнение Украиной всех требований плана действий визовой либерализации. Еврочиновники в своем новом отчете рекомендуют Евросовету и Европарламенту начать процесс отмены виз для украинцев</div>
 
-	stitle, _ := pick.PickText(&pick.Option{ 
+	stitle, _ := pick.PickText(&pick.Option{
 		&shtml,
 		"div",
 		&pick.Attr{
@@ -208,9 +177,9 @@ func (this *News) ParserNewsRbc() {
 			"article__overview__text",
 		},
 	})
-	
-//	fmt.Println(stitle)
-	
+
+	//	fmt.Println(stitle)
+
 	if len(stitle) > 0 {
 		this.title = stitle[0]
 	}
@@ -225,7 +194,36 @@ func (this *News) ParserNewsRbc() {
 
 //--------------- END парсинг РБК
 
+func GetNews(lnn ListNews) []News {
+	url := lnn.url
+	n := make([]News, 0)
+	switch lnn.name {
+	case "EchoMSK":
+		{
+			ss := GetNewsUrlEchoMsk(url)
 
+			for i := 0; i < len(ss); i++ {
+				n = append(n, News{url: ss[i]})
+			}
+
+			for i := 0; i < len(n); i++ {
+				n[i].ParserNewsEchoMsk()
+			}
+		}
+	case "RBC_RT":
+		{
+			ss := GetNewsUrlRbc(url)
+
+			for i := 0; i < len(ss); i++ {
+				n = append(n, News{url: ss[i]})
+			}
+			for i := 0; i < len(n); i++ {
+				n[i].ParserNewsRbc()
+			}
+		}
+	}
+	return n
+}
 
 // генерация html главной страницы
 func Htmlpage(sn []News) string {
@@ -233,32 +231,36 @@ func Htmlpage(sn []News) string {
 	begstr := "<html>\n <head>\n <meta charset='utf-8'>\n <title>" + zagol + "</title>\n </head>\n <body>\n"
 	//	<h3 id=”Razdel2”> Раздел2 </h3>
 	bodystr := "<h1 align=\"center\"><a name=\"MainPage\"> ГРАББЕР НОВОСТЕЙ </a></h1><br>"
-	bodystr += HtmlNews(sn,"EchoMSK")
+	bodystr += HtmlNews(sn, "EchoMSK")
 	endstr := "</body>\n" + "</html>"
 	return begstr + bodystr + endstr
 }
 
 // шаблон оформления новости из одного ресурса
-func HtmlNews(sn []News,titlenews string) string{
-	bodystr := "<h3 align=\"center\"><a name=\""+titlenews+"\"> "+titlenews+" </a></h3><br>" + "<TABLE align=\"center\" border=\"1\">"
+func HtmlNews(sn []News, titlenews string) string {
+	bodystr := "<h3 align=\"center\"><a name=\"" + titlenews + "\"> " + titlenews + " </a></h3><br>" + "<TABLE align=\"center\" border=\"1\">"
 	for i := 0; i < len(sn); i++ {
-		bodystr += "<TR> <TD width=\"350\"> <b>" + genhtml.Link(sn[i].title, sn[i].url) + "</b></TD>" + "<TD width=\"550\"><br>" + sn[i].content + "" + "<br> <a href=\"#MainPage\"> В начало </a>" + " <a href=\"#"+titlenews+"\"> К "+titlenews+" </a> "+ "</TD> </TR>"
+		bodystr += "<TR> <TD width=\"350\"> <b>" + genhtml.Link(sn[i].title, sn[i].url) + "</b></TD>" + "<TD width=\"550\"><br>" + sn[i].content + "" + "<br> <a href=\"#MainPage\"> В начало </a>" + " <a href=\"#" + titlenews + "\"> К " + titlenews + " </a> " + "</TD> </TR>"
 	}
-	bodystr += "</TABLE>"	
+	bodystr += "</TABLE>"
 	return bodystr
 }
 
-
 func main() {
-//	fmt.Println("Starting программы")
-	
-    n:=GetNewsEchoMsk()	
-	str := Htmlpage(n)	
+	//	fmt.Println("Starting программы")
+	ln := make([]ListNews, 0)
+	ln = append(ln, ListNews{name: "EchoMSK", url: "http://echo.msk.ru/"})
+	ln = append(ln, ListNews{name: "RBC_RT", url: "http://rt.rbc.ru/"})
+
+	fmt.Println(ln)
+
+	n := GetNews(ln[0])
+	str := Htmlpage(n)
 	genhtml.Savestrtofile("news.html", str)
-	
-	rbc:=GetNewsRbc()
-	s:=Htmlpage(rbc)
+
+	rbc := GetNews(ln[1])
+	s := Htmlpage(rbc)
 	genhtml.Savestrtofile("rbc.html", s)
 
-//	fmt.Println("Ending программы")
+	//	fmt.Println("Ending программы")
 }
