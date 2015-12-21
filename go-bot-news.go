@@ -70,7 +70,7 @@ func delpovtor(s []string) []string {
 	for i := 0; i < len(s); i++ {
 		fl = true
 		for j := 0; j < len(st); j++ {
-			if (s[i] == st[j]) {
+			if s[i] == st[j] {
 				fl = false
 			}
 		}
@@ -81,7 +81,9 @@ func delpovtor(s []string) []string {
 	return st
 }
 
-// вывод на пкчать массива строк
+//func delnull(s []string)
+
+// вывод на печать массива строк
 func printarray(s []string) {
 	for i := 0; i < len(s); i++ {
 		fmt.Println(s[i])
@@ -194,7 +196,6 @@ func (this *News) ParserNewsRbc() {
 
 //--------------- END парсинг РБК
 
-
 //--------------- парсинг Яндекс
 
 //получение урлы новостей с главной страницы
@@ -205,18 +206,15 @@ func GetNewsUrlYandex(url string) []string {
 	}
 	body := gethtmlpage(url)
 	shtml := string(body)
-	
+
 	// <a href="https://news.yandex.ru/yandsearch?cl4url=izvestia.ru/news/599938&lang=ru&lr=43" class="link list__item-content link_black_yes" aria-label="Сегодня цена на нефть марки Brent впервые за 11 лет снизилась до $36,2">Сегодня цена на нефть марки Brent впервые за 11 лет снизилась до $36,2</a>
-	snewsmusor, _ := pick.PickAttr(&pick.Option{&shtml, "a", nil}, "href")	
+	snewsmusor, _ := pick.PickAttr(&pick.Option{&shtml, "a", nil}, "href")
 	snews := make([]string, 0)
 	for i := 0; i < len(snewsmusor); i++ {
-		if strings.Contains(snewsmusor[i], "news.yandex.ru") {  //&& (strings.Contains(snewsmusor[i], "/news/")) {
+		if strings.Contains(snewsmusor[i], "news.yandex.ru") {
 			snews = append(snews, snewsmusor[i])
 		}
 	}
-
-	fmt.Println(snews)
-
 	return delpovtor(snews)
 }
 
@@ -226,7 +224,7 @@ func (this *News) ParserNewsYandex() {
 	if this.url == "" {
 		return
 	}
-		
+
 	body := gethtmlpage(this.url)
 	shtml := string(body)
 
@@ -241,22 +239,13 @@ func (this *News) ParserNewsYandex() {
 		},
 	})
 
-//		fmt.Println(stitle)
-
 	if len(stitle) > 0 {
 		this.title = stitle[0]
 	}
-
-//	//	<meta property="og:description" content="
-//	//В   том числе дела об убийстве    Бориса  Немцова. «Следствие должно установить, как бы долго оно ни продолжалось. Это преступление должно быть расследовано и участники должны быть наказаны, кто бы это ни был, — сказал глава государства." />
-//	scont, _ := pick.PickAttr(&pick.Option{&shtml, "meta", &pick.Attr{"property", "og:description"}}, "content")
-//	this.content = scont[0]
-
 	return
 }
 
 //--------------- END парсинг Яндекс
-
 
 func GetNews(lnn ListNews) []News {
 	url := lnn.url
@@ -336,6 +325,20 @@ func HtmlNews(sn []News, titlenews string) string {
 	return bodystr
 }
 
+// удаление пустых значений в новостях
+func DelNullNews(n []News) []News {
+	rn := make([]News, 0)
+	for i := 0; i < len(n); i++ {
+		if (n[i].title == "") && (n[i].content == "") {
+
+		} else {
+			rn = append(rn, n[i])
+		}
+
+	}
+	return rn
+}
+
 func main() {
 	//	fmt.Println("Starting программы")
 	ln := make([]ListNews, 0)
@@ -349,6 +352,7 @@ func main() {
 
 	for i := 0; i < len(ln); i++ {
 		n := GetNews(ln[i])
+		n = DelNullNews(n)
 		str += Htmlpage(ln[i], n) + "<br><br>"
 	}
 
