@@ -70,7 +70,7 @@ func delpovtor(s []string) []string {
 	for i := 0; i < len(s); i++ {
 		fl = true
 		for j := 0; j < len(st); j++ {
-			if s[i] == st[j] {
+			if (s[i] == st[j]) {
 				fl = false
 			}
 		}
@@ -194,6 +194,70 @@ func (this *News) ParserNewsRbc() {
 
 //--------------- END парсинг РБК
 
+
+//--------------- парсинг Яндекс
+
+//получение урлы новостей с главной страницы
+func GetNewsUrlYandex(url string) []string {
+	//	var ss []string
+	if url == "" {
+		return make([]string, 0)
+	}
+	body := gethtmlpage(url)
+	shtml := string(body)
+	
+	// <a href="https://news.yandex.ru/yandsearch?cl4url=izvestia.ru/news/599938&lang=ru&lr=43" class="link list__item-content link_black_yes" aria-label="Сегодня цена на нефть марки Brent впервые за 11 лет снизилась до $36,2">Сегодня цена на нефть марки Brent впервые за 11 лет снизилась до $36,2</a>
+	snewsmusor, _ := pick.PickAttr(&pick.Option{&shtml, "a", nil}, "href")	
+	snews := make([]string, 0)
+	for i := 0; i < len(snewsmusor); i++ {
+		if strings.Contains(snewsmusor[i], "news.yandex.ru") {  //&& (strings.Contains(snewsmusor[i], "/news/")) {
+			snews = append(snews, snewsmusor[i])
+		}
+	}
+
+	fmt.Println(snews)
+
+	return delpovtor(snews)
+}
+
+//парсер новостей с сайта РБК
+func (this *News) ParserNewsYandex() {
+
+	if this.url == "" {
+		return
+	}
+		
+	body := gethtmlpage(this.url)
+	shtml := string(body)
+
+	//<h1 class="story__head">Блаттера и Платини отстранили от футбола на 8 лет</h1>
+
+	stitle, _ := pick.PickText(&pick.Option{
+		&shtml,
+		"h1",
+		&pick.Attr{
+			"class",
+			"story__head",
+		},
+	})
+
+//		fmt.Println(stitle)
+
+	if len(stitle) > 0 {
+		this.title = stitle[0]
+	}
+
+//	//	<meta property="og:description" content="
+//	//В   том числе дела об убийстве    Бориса  Немцова. «Следствие должно установить, как бы долго оно ни продолжалось. Это преступление должно быть расследовано и участники должны быть наказаны, кто бы это ни был, — сказал глава государства." />
+//	scont, _ := pick.PickAttr(&pick.Option{&shtml, "meta", &pick.Attr{"property", "og:description"}}, "content")
+//	this.content = scont[0]
+
+	return
+}
+
+//--------------- END парсинг Яндекс
+
+
 func GetNews(lnn ListNews) []News {
 	url := lnn.url
 	n := make([]News, 0)
@@ -221,29 +285,38 @@ func GetNews(lnn ListNews) []News {
 				n[i].ParserNewsRbc()
 			}
 		}
+	case "YANDEX":
+		{
+			ss := GetNewsUrlYandex(url)
+
+			for i := 0; i < len(ss); i++ {
+				n = append(n, News{url: ss[i]})
+			}
+			for i := 0; i < len(n); i++ {
+				n[i].ParserNewsYandex()
+			}
+		}
 	}
 	return n
 }
 
 //---------------- генерация html главной страницы
 
-
 // генерация html главной страницы Начало
 func HtmlpageBegins(ls []ListNews) string {
 	zagol := "ГРАББЕР НОВОСТЕЙ"
-	begstr := "<html>\n <head>\n <meta charset='utf-8'>\n <title>" + zagol + "</title>\n </head>\n <body>\n"+"<h1 align=\"center\"><a name=\"MainPage\"> ГРАББЕР НОВОСТЕЙ </a></h1>"	
-	s:="<h3>Источники</h3>"
-	for i:=0;i<len(ls);i++{
-		s+=" <a href=\"#" + ls[i].name + "\"> К " + ls[i].name + " </a> "+"<br>"
+	begstr := "<html>\n <head>\n <meta charset='utf-8'>\n <title>" + zagol + "</title>\n </head>\n <body>\n" + "<h1 align=\"center\"><a name=\"MainPage\"> ГРАББЕР НОВОСТЕЙ </a></h1>"
+	s := "<h3>Источники</h3>"
+	for i := 0; i < len(ls); i++ {
+		s += " <a href=\"#" + ls[i].name + "\"> К " + ls[i].name + " </a> " + "<br>"
 	}
-	return begstr+s+"<br>"
+	return begstr + s + "<br>"
 }
 
 // генерация html главной страницы
-func Htmlpage(ls ListNews, sn []News) string {	
+func Htmlpage(ls ListNews, sn []News) string {
 	return HtmlNews(sn, ls.name)
 }
-
 
 // генерация html главной страницы Конец
 func HtmlpageEnds(ls []ListNews) string {
@@ -266,20 +339,21 @@ func HtmlNews(sn []News, titlenews string) string {
 func main() {
 	//	fmt.Println("Starting программы")
 	ln := make([]ListNews, 0)
+	ln = append(ln, ListNews{name: "YANDEX", url: "http://yandex.ru/"})
 	ln = append(ln, ListNews{name: "EchoMSK", url: "http://echo.msk.ru/"})
 	ln = append(ln, ListNews{name: "RBC_RT", url: "http://rt.rbc.ru/"})
 
 	//	fmt.Println(ln)
-	
-	str:=HtmlpageBegins(ln)
-	
+
+	str := HtmlpageBegins(ln)
+
 	for i := 0; i < len(ln); i++ {
-		n := GetNews(ln[i]) 
-		str += Htmlpage(ln[i], n)+"<br><br>" 		
+		n := GetNews(ln[i])
+		str += Htmlpage(ln[i], n) + "<br><br>"
 	}
-	
+
 	str += HtmlpageEnds(ln)
-	
+
 	genhtml.Savestrtofile("news.html", str)
 
 	//	fmt.Println("Ending программы")
