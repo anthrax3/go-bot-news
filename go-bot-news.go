@@ -227,22 +227,26 @@ func GetNews(lnn ListNews) []News {
 
 //---------------- генерация html главной страницы
 
+
 // генерация html главной страницы Начало
-func HtmlpageBegin(sn []News) string {
+func HtmlpageBegins(ls []ListNews) string {
 	zagol := "ГРАББЕР НОВОСТЕЙ"
-	begstr := "<html>\n <head>\n <meta charset='utf-8'>\n <title>" + zagol + "</title>\n </head>\n <body>\n"
-	return begstr
+	begstr := "<html>\n <head>\n <meta charset='utf-8'>\n <title>" + zagol + "</title>\n </head>\n <body>\n"+"<h1 align=\"center\"><a name=\"MainPage\"> ГРАББЕР НОВОСТЕЙ </a></h1>"	
+	s:="<h3>Источники</h3>"
+	for i:=0;i<len(ls);i++{
+		s+=" <a href=\"#" + ls[i].name + "\"> К " + ls[i].name + " </a> "+"<br>"
+	}
+	return begstr+s+"<br>"
 }
 
 // генерация html главной страницы
-func Htmlpage(ls ListNews, sn []News) string {
-	bodystr := "<h1 align=\"center\"><a name=\"MainPage\"> ГРАББЕР НОВОСТЕЙ </a></h1><br>"
-	bodystr += HtmlNews(sn, ls.name)
-	return bodystr
+func Htmlpage(ls ListNews, sn []News) string {	
+	return HtmlNews(sn, ls.name)
 }
 
+
 // генерация html главной страницы Конец
-func HtmlpageEnd(sn []News) string {
+func HtmlpageEnds(ls []ListNews) string {
 	endstr := "</body>\n" + "</html>"
 	return endstr
 }
@@ -266,13 +270,17 @@ func main() {
 	ln = append(ln, ListNews{name: "RBC_RT", url: "http://rt.rbc.ru/"})
 
 	//	fmt.Println(ln)
-
+	
+	str:=HtmlpageBegins(ln)
+	
 	for i := 0; i < len(ln); i++ {
-		n := GetNews(ln[i])
-		str := Htmlpage(ln[i], n)
-		str = HtmlpageBegin(n) + str + HtmlpageEnd(n)
-		genhtml.Savestrtofile(ln[i].name+"-news.html", str)
+		n := GetNews(ln[i]) 
+		str += Htmlpage(ln[i], n)+"<br><br>" 		
 	}
+	
+	str += HtmlpageEnds(ln)
+	
+	genhtml.Savestrtofile("news.html", str)
 
 	//	fmt.Println("Ending программы")
 }
