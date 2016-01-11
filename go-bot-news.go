@@ -2,6 +2,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"go-bot-news/pkg"
 	"go-bot-news/pkg/html"
@@ -339,8 +340,21 @@ func DelNullNews(n []News) []News {
 	return rn
 }
 
+var todir string
+
+// функция парсинга аргументов программы
+func parse_args() bool {
+	flag.StringVar(&todir, "todir", "", "Конечная папка для выгрузки новости.")
+	flag.Parse()
+	if todir == "" {
+		todir = ""
+	}
+	return true
+}
+
 func main() {
 	//	fmt.Println("Starting программы")
+	parse_args()
 	ln := make([]ListNews, 0)
 	ln = append(ln, ListNews{name: "YANDEX", url: "http://yandex.ru/"})
 	ln = append(ln, ListNews{name: "EchoMSK", url: "http://echo.msk.ru/"})
@@ -358,7 +372,11 @@ func main() {
 
 	str += HtmlpageEnds(ln)
 
-	genhtml.Savestrtofile("news.html", str)
+	if todir == "" {
+		genhtml.Savestrtofile("news.html", str)
+	} else {
+		genhtml.Savestrtofile(todir+"news.html", str)
+	}
 
 	//	fmt.Println("Ending программы")
 }
