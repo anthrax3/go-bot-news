@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html/charset"
 )
@@ -295,7 +296,8 @@ func GetNews(lnn ListNews) []News {
 // генерация html главной страницы Начало
 func HtmlpageBegins(ls []ListNews) string {
 	zagol := "ГРАББЕР НОВОСТЕЙ"
-	begstr := "<html>\n <head>\n <meta charset='utf-8'>\n <title>" + zagol + "</title>\n </head>\n <body>\n" + "<h1 align=\"center\"><a name=\"MainPage\"> ГРАББЕР НОВОСТЕЙ </a></h1>"
+	stime := "<br>" + "Выгружено: " + time.Now().String() + "<br>"
+	begstr := "<html>\n <head>\n <meta charset='utf-8'>\n <title>" + zagol + "</title>\n </head>\n <body>\n" + "<h1 align=\"center\"><a name=\"MainPage\"> ГРАББЕР НОВОСТЕЙ </a></h1>" + stime
 	s := "<h3>Источники</h3>"
 	for i := 0; i < len(ls); i++ {
 		s += " <a href=\"#" + ls[i].name + "\"> К " + ls[i].name + " </a> " + "<br>"
