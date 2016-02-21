@@ -155,8 +155,11 @@ func GetNewsUrlRbc(url string) []string {
 	body := gethtmlpage(url)
 	shtml := string(body)
 
-	// <a href="http://www.rbc.ru/politics/18/12/2015/5673fcd39a794764ce0cd14e" class="news-main-feed__item__link chrome" data-ati-item="item_1" data-ati-title="%D0%95%D0%B2%D1%80%D0%BE%D0%BA%D0%BE%D0%BC%D0%B8%D1%81%D1%81%D0%B8%D1%8F+%D1%80%D0%B5%D0%BA%D0%BE%D0%BC%D0%B5%D0%BD%D0%B4%D0%BE%D0%B2%D0%B0%D0%BB%D0%B0+%D0%BE%D1%82%D0%BC%D0%B5%D0%BD%D0%B8%D1%82%D1%8C+%D0%B2%D0%B8%D0%B7%D0%BE%D0%B2%D1%8B%D0%B9+%D1%80%D0%B5%D0%B6%D0%B8%D0%BC+%D0%B4%D0%BB%D1%8F%D0%A3%D0%BA%D1%80%D0%B0%D0%B8%D0%BD%D1%8B" data-ati-id="5673fcd39a794764ce0cd14e" data-ati-url="http://www.rbc.ru/politics/18/12/2015/5673fcd39a794764ce0cd14e">
-	snewsmusor, _ := pick.PickAttr(&pick.Option{&shtml, "a", &pick.Attr{"class", "news-main-feed__item__link chrome"}}, "href")
+	//	<a href="http://www.rbc.ru/politics/21/02/2016/56c9bc3f9a7947d4e91f4ad5" class="news-feed__item chrome news-feed__item_visited-color"
+	//data-ati-item="feed" data-ati-title="" data-ati-id="" data-ati-url="http://www.rbc.ru/politics/21/02/2016/56c9bc3f9a7947d4e91f4ad5"
+	//data-pub="false"
+
+	snewsmusor, _ := pick.PickAttr(&pick.Option{&shtml, "a", &pick.Attr{"data-ati-item", "feed"}}, "href")
 	snews := snewsmusor
 
 	return delpovtor(snews)
@@ -171,14 +174,16 @@ func (this *News) ParserNewsRbc() {
 	body := gethtmlpage(this.url)
 	shtml := string(body)
 
-	//    <div class="article__overview__text">Еврокомиссия констатировала выполнение Украиной всех требований плана действий визовой либерализации. Еврочиновники в своем новом отчете рекомендуют Евросовету и Европарламенту начать процесс отмены виз для украинцев</div>
+	//	 <span class="header__article__head__title">
+	//                                                    Президент Турции заявил о праве страны бороться с террором за рубежом
+	//                                            </span>
 
 	stitle, _ := pick.PickText(&pick.Option{
 		&shtml,
-		"div",
+		"span",
 		&pick.Attr{
 			"class",
-			"article__overview__text",
+			"header__article__head__title",
 		},
 	})
 
@@ -220,7 +225,7 @@ func GetNewsUrlYandex(url string) []string {
 	return delpovtor(snews)
 }
 
-//парсер новостей с сайта РБК
+//парсер новостей с сайта Яндекса
 func (this *News) ParserNewsYandex() {
 
 	if this.url == "" {
