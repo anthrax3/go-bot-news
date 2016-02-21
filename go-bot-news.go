@@ -248,7 +248,11 @@ func (this *News) ParserNewsYandex() {
 
 	if len(stitle) > 0 {
 		this.title = stitle[0]
+		//	<meta name="og:description" content="«У Турции есть полное право проводить антитеррористические операции в Сирии и других странах, где базируются террористические группировки, так как это часть борьбы против стоящих перед нами угроз», — сказал Эрдоган."/>
+		scont, _ := pick.PickAttr(&pick.Option{&shtml, "meta", &pick.Attr{"name", "og:description"}}, "content")
+		this.content = scont[0]
 	}
+
 	return
 }
 
