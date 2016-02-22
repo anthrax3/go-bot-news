@@ -18,9 +18,10 @@ import (
 )
 
 type News struct {
-	url     string //урл новости
-	title   string // заголовок новости
-	content string // содержимое новости
+	url          string //урл новости
+	title        string // заголовок новости
+	content      string // содержимое новости
+	smallcontent string // краткое содержание новости
 }
 
 type ListNews struct {
